@@ -1,0 +1,138 @@
+#include <conio.h>
+#include <graphics.h>
+#include <stdio.h>
+
+int algo = 1;
+
+void mid(int cx, int cy, int r) {
+    int x = 0, y = r;
+    int P = 1 - r;
+
+    while (x <= y) {
+        putpixel(cx + x, cy + y, WHITE);
+        putpixel(cx + x, cy - y, WHITE);
+        putpixel(cx - x, cy + y, WHITE);
+        putpixel(cx - x, cy - y, WHITE);
+
+        putpixel(cx + y, cy + x, WHITE);
+        putpixel(cx - y, cy + x, WHITE);
+        putpixel(cx + y, cy - x, WHITE);
+        putpixel(cx - y, cy - x, WHITE);
+
+        x++;
+
+        if (P > 0) {
+            y -= 1;
+            P += 2 * (x - y) + 5;
+        } else
+            P += (2 * x + 3);
+    }
+}
+
+
+void brec(int cx, int cy, int r) {
+    int x = 0, y = r;
+    int S = 3 - 2 * r;
+
+    while (x <= y) {
+        putpixel(cx + x, cx + y, WHITE);
+        putpixel(cx + x, cx - y, WHITE);
+        putpixel(cx - x, cx + y, WHITE);
+        putpixel(cx - x, cx - y, WHITE);
+
+        putpixel(cx + y, cx + x, WHITE);
+        putpixel(cx + y, cx - x, WHITE);
+        putpixel(cx - y, cx + x, WHITE);
+        putpixel(cx - y, cx - x, WHITE);
+
+        x++;
+
+        if (S <= 0) {
+            S += 4 * x + 6;
+        } else {
+            y--;
+            S += 4 * (x - y) + 10;
+        }
+    }
+}
+
+void pattern(int rx, int ry){
+    // draw face
+    mid(rx + 10, ry + 10, 15);
+    // draw belly
+    mid(rx + 10, ry + 40, 15);
+    mid(rx + 10, ry + 40, 12);
+
+    // draw two eyes
+    mid(rx + 5, ry + 7, 3);
+    mid(rx + 15, ry + 7, 3);
+
+    // draw mouth
+    mid(rx + 10, ry + 15, 3);
+
+    // draw ears
+    mid(rx - 3, ry - 2, 4);
+    mid(rx + 23, ry - 2, 4);
+
+    // draw hands
+    mid(rx - 5, ry + 28, 3);
+    mid(rx + 25, ry + 28, 3);
+
+    // draw legs
+    mid(rx - 5, ry + 50, 3);
+    mid(rx + 25, ry + 50, 3);
+}
+
+int main() {
+    int gd = DETECT, gm;
+    int cx, cy, r;
+    int end = 0;
+    initgraph(&gd, &gm, " ");
+
+    do{
+        printf("\n\n1. Circle using midpoint\n");
+        printf("2. Circle using bresenham algorithm\n");
+        printf("3. Circle pattern (Teddy)\n");
+        printf("4. Exit\n");
+
+        printf("\nEnter your choice: ");
+        scanf("%d", &algo);
+
+        switch(algo){
+            case 1:
+                printf("Enter x coordinates of centre: ");
+                scanf("%d", &cx);
+                printf("Enter y coordinates of centre: ");
+                scanf("%d", &cy);
+                printf("Enter radius of circle: ");
+                scanf("%d", &r);
+                mid(cx, cy, r);
+                break;
+            case 2:
+                printf("Enter x coordinates of centre: ");
+                scanf("%d", &cx);
+                printf("Enter y coordinates of centre: ");
+                scanf("%d", &cy);
+                printf("Enter radius of circle: ");
+                scanf("%d", &r);
+                brec(cx, cy, r);
+                break;
+            case 3:
+                printf("Enter x coordinates of object: ");
+                scanf("%d", &cx);
+                printf("Enter y coordinates of object: ");
+                scanf("%d", &cy);
+                pattern(cx, cy);
+                break;
+            case 4:
+                end = 1;
+                break;
+            default:
+                printf("Please enter a valid choice!");
+        }
+
+    } while(!end);
+
+    closegraph();
+    return 0;
+}
