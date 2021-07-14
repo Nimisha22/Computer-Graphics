@@ -1,0 +1,291 @@
+// Program to show that two successive translations
+// are commutative in nature
+
+#include <conio.h>
+#include <math.h>
+#include <stdio.h>
+#include <graphics.h>
+
+#define nullptr ((matrix*)0)
+
+int colour;
+
+int abs(int val) {
+    return (val < 0) ? -val : val;
+}
+
+int sigmoid(int val) {
+    if (val > 0) return 1;
+    if (val < 0) return -1;
+    return 0;
+}
+
+void bre(int x1, int y1, int x2, int y2) {
+    int x = x1, y = y1;
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+
+    int xchange = sigmoid(dx);
+    int ychange = sigmoid(dy);
+    dx = abs(dx);
+    dy = abs(dy);
+
+    int p = 2 * dy - dx;
+    int n = 0;
+
+    if (abs(dx) > abs(dy)) {
+        // for gentle slope
+        while (x != x2) {
+            putpixel(x, y, WHITE);
+            x += xchange;
+
+            if (p < 0)
+                p += 2 * dy;
+            else {
+                p += 2 * dy - 2 * dx;
+                y += ychange;
+            }
+
+            n++;
+        }
+
+    } else {
+        // for steep slope
+        while (y != y2) {
+            putpixel(x, y, WHITE);
+            y += ychange;
+
+            if (p < 0)
+                p += 2 * dx;
+            else {
+                p += 2 * dx - 2 * dy;
+                x += xchange;
+            }
+
+            n++;
+        }
+    }
+}
+
+
+class matrix {
+   public:
+    double** val;
+    int rows, cols;
+
+    matrix(int row, int col) {
+        val = new double*[row];
+        for (int i = 0; i < row; i++) {
+            val[i] = new double[col];
+
+            for (int j = 0; j < col; j++)
+                val[i][j] = 0;
+        }
+
+        rows = row;
+        cols = col;
+    }
+
+    void flush() {
+        for (int i = 0; i < rows; i++) delete[] val[i];
+        delete val;
+    }
+
+    matrix* operator*(matrix* other) {
+        if (other == nullptr || cols != other->rows) return nullptr;
+
+        int i, j, k;
+        matrix* result = new matrix(rows, other->cols);
+
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < other->cols; j++) {
+                result->val[i][j] = 0;
+                for (k = 0; k < other->rows; k++) {
+                    result->val[i][j] += val[i][k] * other->val[k][j];
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ~matrix() {
+        flush();
+    }
+};
+
+// this function returns a column matrix
+matrix* col_mat(int first, int second) {
+    matrix* result = new matrix(3, 1);
+    result->val[0][0] = first;
+    result->val[1][0] = second;
+    result->val[2][0] = 1;
+    return result;
+}
+
+matrix* diag3(int sx, int sy) {
+    matrix* result = new matrix(3, 3);
+    result->val[0][0] = sx;
+    result->val[1][1] = sy;
+    result->val[2][2] = 1;
+    return result;
+}
+
+
+matrix* translate_mat(int tx, int ty) {
+    matrix* result = new matrix(3, 3);
+
+    result->val[0][0] = 1;
+    result->val[0][2] = tx;
+
+    result->val[1][1] = 1;
+    result->val[1][2] = ty;
+
+    result->val[2][2] = 1;
+
+    return result;
+}
+
+matrix* translate(matrix* original, int tx, int ty){
+    matrix* transmat = translate_mat(tx, ty);
+    matrix* result = *transmat * original;
+
+    delete transmat;
+    delete original;
+
+    return result;
+}
+
+
+void toreal(int* x, int* y, int width, int height) {
+    *x += width / 2;
+    *y = height / 2 - *y;
+}
+
+void totheory(int* x, int* y, int width, int height) {
+    *x -= width / 2;
+    *y = height / 2 - *y;
+}
+
+int x[10], y[10], n;
+
+
+void drawpoly(){
+    for (int i = 1; i < n; i++) {
+        bre(x[i - 1], y[i - 1], x[i], y[i]);
+    }
+    bre(x[0], y[0], x[n - 1], y[n - 1]);
+}
+
+int avgx(){
+    int avg = 0;
+    for(int i = 0; i < n; i++)
+        avg += x[i];
+    return avg / n;
+}
+
+int avgy(){
+    int avg = 0;
+    for(int i = 0; i < n; i++)
+        avg += y[i];
+    return avg / n;
+}
+
+void translate_all(int tx, int ty){
+    matrix* all_points = new matrix(n, 3);
+    int i;
+    for(i = 0; i < n; i++){
+        all_points->val[i][0] = x[i];
+        all_points->val[i][1] = y[i];
+        all_points->val[i][2] = 1;
+    }
+
+    matrix* translator = diag3(1, 1);
+    translator->val[2][0] = tx;
+    translator->val[2][1] = ty;
+
+    all_points = (*all_points) * translator;
+    delete translator;
+
+    for(i = 0; i < n; i++){
+        x[i] = all_points->val[i][0];
+        y[i] = all_points->val[i][1];
+    }
+
+    delete all_points;
+}
+
+
+void toreal_all(int width, int height){
+    for(int i = 0; i < n; i++){
+        x[i] += width / 2;
+        y[i] = height / 2 - y[i];
+    }
+}
+
+void totheory_all(int width, int height){
+    for(int i = 0; i < n; i++){
+        x[i] -= width / 2;
+        y[i] = height / 2 - y[i];
+    }
+}
+
+
+int main() {
+    int gd = DETECT, gm;
+    initgraph(&gd, &gm, " ");
+    colour = WHITE;
+
+    int WIDTH = getmaxx();
+    int HEIGHT = getmaxy();
+
+    int x_1, y_1, x_2, y_2;
+
+    x[0] = 50;
+    y[0] = 50;
+
+    x[1] = 100;
+    y[1] = 100;
+
+    x[2] = 0;
+    y[2] = 100;
+
+    n = 3;
+
+    outtextxy(10, 10, "Original polygon");
+    drawpoly();
+
+menu:
+    cleardevice();
+
+    printf("Enter first time translation values along x and y axis:  ");
+    scanf("%d %d", &x_1, &y_1);
+
+    printf("Enter second time translation values along x and y axis:  ");
+    scanf("%d %d", &x_2, &y_2);
+
+    // draw polygon after first translation
+    translate_all(x_1, y_1);
+    outtextxy(x_1 - 10, y_1 - 10, "After first translation");
+    drawpoly();
+
+    // draw polygon after second translation
+    translate_all(x_2, y_2);
+    outtextxy(x_2 - 10, y_2 - 10, "After second translation");
+    drawpoly();
+
+    // draw polygon after both translations
+    setcolor(YELLOW);
+    int x_tot = x_1 + x_2;
+    int y_tot = y_1 + y_2;
+    translate_all(-x_tot, 100);
+    translate_all(x_tot, y_tot);
+    outtextxy(x_tot - 10, y_tot - 10, "After both translations");
+    drawpoly();
+
+
+    printf("\n\nThus we show that two successive translations are commutative in nature");
+
+    getch();
+    return 0;
+}
