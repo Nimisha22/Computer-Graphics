@@ -1,0 +1,201 @@
+#include <conio.h>
+#include <graphics.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define max(x, y) ((x > y) ? x : y)
+
+int algo = 1;
+
+void dda(int x1, int y1, int x2, int y2) {
+    int dy = y2 - y1;
+    int dx = x2 - x1;
+    int ydisp, xdisp;
+
+    double m = dy;
+    if (dx != 0)
+        m /= dx;
+
+
+    if(abs(dx) > abs(dy)) {
+        // Gentle Slope
+
+        int x = x1;
+        double y = y1;
+
+        while(x != x2){
+            x += 1;
+            y += m;
+            ydisp = round(y);
+            putpixel(x, ydisp, WHITE);
+        }
+    }
+    else {
+        // Steep slope
+
+        double x = x1;
+        int y = y1;
+
+        while(y != y2){
+            y += 1;
+            x += 1/m;
+            xdisp = round(x);
+            putpixel(xdisp, y, WHITE);
+        }
+    }
+}
+
+int abs(int val) {
+    return (val < 0) ? -val : val;
+}
+
+int sigmoid(int val) {
+    if (val > 0) return 1;
+    if (val < 0) return -1;
+    return 0;
+}
+
+void bre(int x1, int y1, int x2, int y2) {
+    int x = x1, y = y1;
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+
+    int xchange = sigmoid(dx);
+    int ychange = sigmoid(dy);
+    dx = abs(dx);
+    dy = abs(dy);
+
+    int p = 2 * dy - dx;
+    int n = 0;
+
+    if (abs(dx) > abs(dy)) {
+        // for gentle slope
+        while (x != x2) {
+            putpixel(x, y, WHITE);
+            x += xchange;
+
+            if (p < 0)
+                p += 2 * dy;
+            else {
+                p += 2 * dy - 2 * dx;
+                y += ychange;
+            }
+
+            n++;
+        }
+
+    } else {
+        // for steep slope
+        while (y != y2) {
+            putpixel(x, y, WHITE);
+            y += ychange;
+
+            if (p < 0)
+                p += 2 * dx;
+            else {
+                p += 2 * dx - 2 * dy;
+                x += xchange;
+            }
+
+            n++;
+        }
+    }
+}
+
+void vase(int x, int y) {
+    int shift = 5;
+
+    // upper trapezium of vase
+    dda(x, y, x + shift * 10, y);                  // ------
+    dda(x + shift, y + shift, x + 40, y + shift);  // ____
+    dda(x, y, x + shift, y + shift);               //   \
+    dda(x + shift * 10, y, x + 40, y + shift);    //   /
+
+    // main body
+    dda(x + shift + 1, y + shift, x - shift * 3, y + shift * 4 + 8);  //
+    dda(x + 40, y + shift, x + 46 + shift * 3, y + shift * 4 + 10);   //
+
+    outtextxy(x + 7, y + shift * 5, "Vase");
+
+    dda(x - shift * 3, y + shift * 4 + 8, x + shift, y + shift * 30);
+    dda(x + 45 + shift * 3, y + shift * 4 + 8, x + shift * 8, y + shift * 30);
+
+    // lower trapezium of vase
+    y += shift * 30;
+
+    bre(x + shift, y, x + shift * 8, y);                   // ------
+    bre(x - shift, y + shift, x + shift * 10, y + shift);  // ____
+    bre(x + shift * 8, y, x + shift * 10, y + shift);      //   \
+    dda(x + shift, y, x - shift, y + shift);               //   /
+}
+
+int main() {
+    int run = 1;
+    int gd = DETECT, gm;
+    initgraph(&gd, &gm, " ");
+    do {
+        printf("\n\nWhich of these do you want to use?\n");
+        printf("1. DDA\n");
+        printf("2. Bresenham\n");
+        printf("3. Vase\n");
+        printf("4. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &algo);
+
+        int x1, y1, x2, y2;
+
+        switch (algo) {
+            case 1:
+                printf("Enter x coordinate of first point: ");
+                scanf("%d", &x1);
+                printf("Enter y coordinate of first point: ");
+                scanf("%d", &y1);
+                printf("Enter x coordinate of second point: ");
+                scanf("%d", &x2);
+                printf("Enter y coordinate of second point: ");
+                scanf("%d", &y2);
+
+                dda(x1, y1, x2, y2);
+                break;
+
+            case 2:
+                printf("Enter x coordinate of first point: ");
+                scanf("%d", &x1);
+                printf("Enter y coordinate of first point: ");
+                scanf("%d", &y1);
+                printf("Enter x coordinate of second point: ");
+                scanf("%d", &x2);
+                printf("Enter y coordinate of second point: ");
+                scanf("%d", &y2);
+
+                bre(x1, y1, x2, y2);
+                break;
+
+            case 3:
+                printf("Enter location where you want to display object\n");
+                printf("Enter x coordinate: ");
+                scanf("%d", &x1);
+                printf("Enter y coordinate: ");
+                scanf("%d", &y1);
+
+                vase(x1, y1);
+                break;
+
+            case 4:
+                run = 0;
+                break;
+
+            default:
+                printf("Please enter a valid choice!");
+        }
+
+        if (algo != 4) {
+            getch();
+        }
+
+    } while (run);
+
+    closegraph();
+    return 0;
+}
